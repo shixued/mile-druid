@@ -172,7 +172,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     protected volatile ValidConnectionChecker          validConnectionChecker                    = null;
     
     protected volatile boolean                         usePingMethod                             = false;
-
+    /**用于存放需要进行removeAbandoned的连接对象*/
     protected final Map<DruidPooledConnection, Object> activeConnections                         = new IdentityHashMap<DruidPooledConnection, Object>();
     protected final static Object                      PRESENT                                   = new Object();
 
@@ -784,8 +784,8 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
     }
 
     public void setMinEvictableIdleTimeMillis(long minEvictableIdleTimeMillis) {
-        if (minEvictableIdleTimeMillis < 1000 * 30) {
-            LOG.error("minEvictableIdleTimeMillis should be greater than 30000");
+        if (minEvictableIdleTimeMillis < 1000 * 10) {
+            LOG.error("minEvictableIdleTimeMillis should be greater than 10000");
         }
         
         this.minEvictableIdleTimeMillis = minEvictableIdleTimeMillis;
@@ -1471,7 +1471,7 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         return testConnectionInternal(null, conn);
     }
 
-    protected boolean testConnectionInternal(DruidConnectionHolder holder, Connection conn) {
+    public boolean testConnectionInternal(DruidConnectionHolder holder, Connection conn) {
         String sqlFile = JdbcSqlStat.getContextSqlFile();
         String sqlName = JdbcSqlStat.getContextSqlName();
 

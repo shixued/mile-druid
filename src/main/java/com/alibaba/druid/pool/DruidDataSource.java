@@ -116,15 +116,18 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     private long                             activePeakTime            = 0;
     private int                              poolingPeak               = 0;
     private long                             poolingPeakTime           = 0;
-    // store
+    /**用于存放所有连接对象*/
     private volatile DruidConnectionHolder[] connections;
+    /**空闲连接对象的数量poolingCount*/
     private int                              poolingCount              = 0;
+    /**借出连接对象的数量*/
     private int                              activeCount               = 0;
     private volatile long                    discardCount              = 0;
     private int                              notEmptyWaitThreadCount   = 0;
     private int                              notEmptyWaitThreadPeak    = 0;
-    //
+    /**用于存放需要丢弃的连接对象*/
     private DruidConnectionHolder[]          evictConnections;
+    /**用于存放需要keepAlive的连接对象*/
     private DruidConnectionHolder[]          keepAliveConnections;
 
     // threads
@@ -1934,7 +1937,10 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
         try {
             // check need to rollback?
             if ((!isAutoCommit) && (!isReadOnly)) {
-                pooledConnection.rollback();
+                // sxd
+                if(!pooledConnection.isClosed() &&  !pooledConnection.getConnectionHolder().getConnection().isClosed()) {
+                    pooledConnection.rollback();
+                }
             }
 
             // reset holder, restore default settings, clear warnings
@@ -2990,6 +2996,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
                 long timeMillis = (currrentNanos - pooledConnection.getConnectedTimeNano()) / (1000 * 1000);
 
+                // 超过时间，会被抛弃。
                 if (timeMillis >= removeAbandonedTimeoutMillis) {
                     iter.remove();
                     pooledConnection.setTraceEnable(false);
@@ -3136,6 +3143,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 }
 
                 if (checkTime) {
+                    // 物理里连接时间>0
                     if (phyTimeoutMillis > 0) {
                         long phyConnectTimeMillis = currentTimeMillis - connection.connectTimeMillis;
                         if (phyConnectTimeMillis > phyTimeoutMillis) {
@@ -3144,6 +3152,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                         }
                     }
 
+                    // 空闲时间。
                     long idleMillis = currentTimeMillis - connection.lastActiveTimeMillis;
 
                     if (idleMillis < minEvictableIdleTimeMillis
@@ -3152,6 +3161,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                         break;
                     }
 
+                    //空闲时间>=minEvictableIdleTimeMillis 才需要继续校验最大maxEvictableIdleTimeMillis
                     if (idleMillis >= minEvictableIdleTimeMillis) {
                         if (checkTime && i < checkCount) {
                             evictConnections[evictCount++] = connection;

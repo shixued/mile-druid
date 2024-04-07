@@ -1217,7 +1217,7 @@ public class DruidPooledConnection extends PoolableWrapper implements javax.sql.
     }
 
     public void setSchema(String schema) throws SQLException {
-        if (JdbcUtils.isMysqlDbType(holder.dataSource.getDbType())) {
+        if (JdbcUtils.isMysqlDbType(holder.dataSource.getDbType()) || JdbcUtils.isOracleDbType(holder.dataSource.getDbType())) {
             if (holder.initSchema == null) {
                 holder.initSchema = conn.getSchema();
             }

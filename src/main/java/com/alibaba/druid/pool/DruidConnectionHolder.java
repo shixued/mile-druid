@@ -19,10 +19,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -75,6 +72,16 @@ public final class DruidConnectionHolder {
     protected final Map<String, Object>           globleVariables;
     final ReentrantLock                           lock                     = new ReentrantLock();
     protected String                              initSchema;
+
+    public Properties getClientProperies() {
+        return clientProperies;
+    }
+
+    public void setClientProperies(Properties clientProperies) {
+        this.clientProperies = clientProperies;
+    }
+
+    public Properties clientProperies;
 
     public DruidConnectionHolder(DruidAbstractDataSource dataSource, PhysicalConnectionInfo pyConnectInfo)
                                                                                                           throws SQLException{

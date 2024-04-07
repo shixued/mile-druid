@@ -23,4 +23,34 @@ public class SqlserverGroupByTest extends TestCase
 
 
     }
+
+
+
+    public void testNolock() throws Exception {
+        String sql = "select top 10 * from  MZSFJLB/*门诊收费记录表*/ a(nolock)";
+        SQLStatementParser parser = new SQLServerStatementParser(sql);
+        SQLSelectStatement stmt = (SQLSelectStatement) parser.parseStatement(); //
+        try {
+            stmt.toString();
+        }  catch (ClassCastException e)
+        {
+            Assert.fail(e.getMessage());
+        }
+
+
+    }
+
+    public void testWithNolock() throws Exception {
+        String sql = "select * from  MZSFJLB/*门诊收费记录表*/ with(nolock)";
+        SQLStatementParser parser = new SQLServerStatementParser(sql);
+        SQLSelectStatement stmt = (SQLSelectStatement) parser.parseStatement(); //
+        try {
+            stmt.toString();
+        }  catch (ClassCastException e)
+        {
+            Assert.fail(e.getMessage());
+        }
+
+
+    }
 }
