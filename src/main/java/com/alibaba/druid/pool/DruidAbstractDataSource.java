@@ -1767,6 +1767,84 @@ public abstract class DruidAbstractDataSource extends WrapperAdapter implements 
         return new PhysicalConnectionInfo(conn, connectStartNanos, connectedNanos, initedNanos, validatedNanos, variables, globalVariables);
     }
 
+
+    public PhysicalConnectionInfo createPhysicalConnection(String user,String password) throws SQLException {
+        String url = this.getUrl();
+        Properties connectProperties = getConnectProperties();
+
+
+
+        PasswordCallback passwordCallback = getPasswordCallback();
+
+        Properties physicalConnectProperties = new Properties();
+        if (connectProperties != null) {
+            physicalConnectProperties.putAll(connectProperties);
+        }
+
+        if (user != null && user.length() != 0) {
+            physicalConnectProperties.put("user", user);
+        }
+
+        if (password != null && password.length() != 0) {
+            physicalConnectProperties.put("password", password);
+        }
+
+        Connection conn = null;
+
+        long connectStartNanos = System.nanoTime();
+        long connectedNanos, initedNanos, validatedNanos;
+
+        Map<String, Object> variables = initVariants
+                ? new HashMap<String, Object>()
+                : null;
+        Map<String, Object> globalVariables = initGlobalVariants
+                ? new HashMap<String, Object>()
+                : null;
+
+        createStartNanosUpdater.set(this, connectStartNanos);
+        creatingCountUpdater.incrementAndGet(this);
+        try {
+            conn = createPhysicalConnection(url, physicalConnectProperties);
+            connectedNanos = System.nanoTime();
+
+            if (conn == null) {
+                throw new SQLException("connect error, url " + url + ", driverClass " + this.driverClass);
+            }
+
+            initPhysicalConnection(conn, variables, globalVariables);
+            initedNanos = System.nanoTime();
+
+            validateConnection(conn);
+            validatedNanos = System.nanoTime();
+
+            setFailContinuous(false);
+            setCreateError(null);
+        } catch (SQLException ex) {
+            setCreateError(ex);
+            JdbcUtils.close(conn);
+            throw ex;
+        } catch (RuntimeException ex) {
+            setCreateError(ex);
+            JdbcUtils.close(conn);
+            throw ex;
+        } catch (Error ex) {
+            createErrorCountUpdater.incrementAndGet(this);
+            setCreateError(ex);
+            JdbcUtils.close(conn);
+            throw ex;
+        } finally {
+            long nano = System.nanoTime() - connectStartNanos;
+            createTimespan += nano;
+            creatingCountUpdater.decrementAndGet(this);
+        }
+
+        return new PhysicalConnectionInfo(conn, connectStartNanos, connectedNanos, initedNanos, validatedNanos, variables, globalVariables);
+    }
+
+
+
+
+
     protected void setCreateError(Throwable ex) {
         if (ex == null) {
             lock.lock();

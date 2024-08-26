@@ -345,7 +345,45 @@ public class SQLServerStatementParser extends SQLStatementParser {
 
         return udpateStatement;
     }
-    
+
+    public SQLDeleteStatement parseDeleteStatement() {
+        SQLDeleteStatement deleteStatement = new SQLDeleteStatement(getDbType());
+
+        if (lexer.token() == Token.DELETE) {
+            lexer.nextToken();
+            SQLServerTop top = this.getExprParser().parseTop();
+            if (top != null) {
+                deleteStatement.setTop(top);
+            }
+            if (lexer.token() == (Token.FROM)) {
+                lexer.nextToken();
+            }
+
+            if (lexer.token() == Token.COMMENT) {
+                lexer.nextToken();
+            }
+
+            SQLName tableName = exprParser.name();
+
+            deleteStatement.setTableName(tableName);
+
+            if (lexer.token() == Token.FROM) {
+                lexer.nextToken();
+                SQLTableSource tableSource = createSQLSelectParser().parseTableSource();
+                deleteStatement.setFrom(tableSource);
+            }
+        }
+
+        if (lexer.token() == (Token.WHERE)) {
+            lexer.nextToken();
+            SQLExpr where = this.exprParser.expr();
+            deleteStatement.setWhere(where);
+        }
+
+        return deleteStatement;
+    }
+
+
     @Override
     public SQLServerExprParser getExprParser() {
         return (SQLServerExprParser) exprParser;

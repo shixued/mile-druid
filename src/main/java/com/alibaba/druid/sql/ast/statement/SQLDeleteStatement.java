@@ -22,6 +22,7 @@ import com.alibaba.druid.sql.ast.expr.SQLBinaryOpExpr;
 import com.alibaba.druid.sql.ast.expr.SQLBinaryOpExprGroup;
 import com.alibaba.druid.sql.ast.expr.SQLBinaryOperator;
 import com.alibaba.druid.sql.ast.expr.SQLIdentifierExpr;
+import com.alibaba.druid.sql.dialect.sqlserver.ast.SQLServerTop;
 import com.alibaba.druid.sql.visitor.SQLASTVisitor;
 
 import java.util.ArrayList;
@@ -29,7 +30,18 @@ import java.util.List;
 
 public class SQLDeleteStatement extends SQLStatementImpl implements SQLReplaceable {
     protected SQLWithSubqueryClause  with;
+    private SQLServerTop top;
 
+    public SQLServerTop getTop() {
+        return top;
+    }
+
+    public void setTop(SQLServerTop top) {
+        if (top != null) {
+            top.setParent(this);
+        }
+        this.top = top;
+    }
     protected SQLTableSource tableSource;
     protected SQLExpr        where;
     protected SQLTableSource from;
